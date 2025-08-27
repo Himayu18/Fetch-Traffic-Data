@@ -22,8 +22,51 @@ thickness = "2"
 open_lr = "false"
 
 road_points = {
-    # your points dictionary here
+    "SH-42 (Ghodbunder Road)": [
+        "19.2500,73.0500",  # Kapurbawdi approx.
+        "19.2500,72.9800"   # Near Ghodbunder junction
+    ],
+    "Eastern Express Highway": [
+        "19.2183,72.9781",  # Thane approx.
+        "19.0760,72.8777"   # Mumbai approx.
+    ],
+    "LBS Marg": [
+        "19.1960,72.9600",  # Thane start
+        "19.0500,72.8700"   # Sion approx.
+    ],
+    "Thane-Belapur Road": [
+        "19.1800,73.0100",  # Kalwa
+        "19.0450,73.0150"   # Navi Mumbai (Turbhe)
+    ],
+    "Sion-Panvel Expressway": [
+        "19.0600,72.8850",  # Sion
+        "18.9800,73.1100"   # Kalamboli
+    ],
+    "Mumbai-Nashik Expressway (NH 3)": [
+        "19.2183,72.9781",  # Thane start
+        "20.0110,73.7900"   # Nashik approx.
+    ],
+    "MDR 64": [
+        "19.4100,73.1800",  # Murbad
+        "19.4300,73.4800"   # Shahapur
+    ],
+    "SH 40": [
+        "19.3200,73.1000",  # Shilphata
+        "19.3000,73.1300"   # Bhiwandi
+    ],
+    "MDR 62": [
+        "19.2200,73.0000"   # Local villages approx.
+    ],
+    "Ring Road (Kalyan-Dombivli)": [
+        "19.2400,73.1300",  # Kalyan
+        "19.2200,73.1000"   # Dombivli
+    ],
+    "Multi-Modal Corridor": [
+        "18.6500,72.8700",  # Alibaug
+        "19.4200,72.8400"   # Virar
+    ]
 }
+
 
 def fetch_traffic_data(point):
     url = (
@@ -41,8 +84,7 @@ def main():
     db = client['thane_traffic']
     collection = db['traffic_flow_data']
 
-    now = datetime.now(timezone.utc)  # UTC timestamp is better for logging
-
+    now = datetime.now(timezone.utc)  
     hour = now.hour
     if not (6 <= hour < 24):
         print(f"Outside allowed hours ({hour}), exiting.")
