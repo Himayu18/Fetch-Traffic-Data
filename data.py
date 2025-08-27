@@ -1,4 +1,5 @@
 import requests
+from datetime import datetime, timezone
 from datetime import datetime
 from pymongo import MongoClient
 import os
@@ -40,7 +41,7 @@ def main():
     db = client['thane_traffic']
     collection = db['traffic_flow_data']
 
-    now = datetime.utcnow()  # UTC timestamp is better for logging
+    now = datetime.now(timezone.utc)  # UTC timestamp is better for logging
 
     hour = now.hour
     if not (6 <= hour < 24):
