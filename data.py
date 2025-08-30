@@ -64,6 +64,46 @@ road_points = {
     "Multi-Modal Corridor": [
         "18.6500,72.8700",  # Alibaug
         "19.4200,72.8400"   # Virar
+    ],
+     "Mumbai-Agra Road (NH3/NH160)": [
+        "19.2183,72.9781",  # Thane approx.
+        "20.0110,73.7900"   # Nashik approx.
+    ],
+    "Kalyan-Shilphata Road": [
+        "19.2500,73.0500",  # Kalyan
+        "19.2500,72.9800"   # Near Shilphata
+    ],
+    "Kalyan-Bhiwandi Road": [
+        "19.2300,73.0800",  # Kalyan
+        "19.2500,73.0100"   # Bhiwandi
+    ],
+    "Kalyan-Badlapur Road": [
+        "19.2200,73.0500",  # Kalyan
+        "19.3000,73.0800"   # Badlapur
+    ],
+    "Dombivli-Manpada Road": [
+        "19.2200,73.0700",  # Dombivli
+        "19.2400,73.1000"   # Manpada
+    ],
+    "Bhiwandi Bypass Road": [
+        "19.2500,73.0500",  # Bhiwandi
+        "19.2500,73.0100"   # Near bypass
+    ],
+    "Airoli-Thane Creek Bridge Road": [
+        "19.1800,72.9800",  # Airoli
+        "19.2200,72.9500"   # Thane
+    ],
+    "Kalyan-Karjat Road": [
+        "19.2100,73.0600",  # Kalyan
+        "19.0400,73.2400"   # Karjat
+    ],
+    "Mumbra Bypass Road": [
+        "19.2500,73.0300",  # Mumbra
+        "19.2400,73.0100"   # Ghodbunder Road junction
+    ],
+    "Dombivli-Kalyan Link Road": [
+        "19.2300,73.0800",  # Dombivli
+        "19.2200,73.0700"   # Kalyan
     ]
 }
 
