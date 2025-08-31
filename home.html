@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroTraff - Real-time Traffic Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23, #1a1a2e, #16213e, #0e1435);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .background-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            background-image: 
+                linear-gradient(90deg, #00d4ff 2px, transparent 2px),
+                linear-gradient(180deg, #00d4ff 2px, transparent 2px),
+                linear-gradient(45deg, transparent 40px, #ff6b6b 40px, #ff6b6b 42px, transparent 42px),
+                linear-gradient(-45deg, transparent 40px, #4ecdc4 40px, #4ecdc4 42px, transparent 42px),
+                radial-gradient(circle at 20% 20%, #00d4ff 1px, transparent 1px),
+                radial-gradient(circle at 80% 80%, #ff6b6b 1px, transparent 1px);
+            background-size: 
+                40px 40px,
+                40px 40px,
+                80px 80px,
+                80px 80px,
+                60px 60px,
+                60px 60px;
+            z-index: -1;
+            animation: trafficPattern 30s infinite linear;
+        }
+        
+        @keyframes trafficPattern {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(-80px, -80px) rotate(360deg); }
+        }
+        
+        header {
+            padding: 2rem 4rem;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(30px);
+            border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #00d4ff, #ff6b6b, #4ecdc4, transparent);
+            animation: headerGlow 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes headerGlow {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            gap: 2rem;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #00d4ff, #0099cc, #ff6b6b);
+            background-size: 200% 200%;
+            animation: logoShimmer 3s ease infinite;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .logo-icon::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00d4ff, #ff6b6b, #4ecdc4, #00d4ff);
+            border-radius: 14px;
+            z-index: -1;
+            animation: borderRotate 4s linear infinite;
+        }
+        
+        @keyframes logoShimmer {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        @keyframes borderRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .logo h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, #00d4ff, #0099cc, #ffffff, #ff6b6b);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: textShimmer 4s ease infinite;
+            position: relative;
+        }
+        
+        .logo h1::after {
+            content: 'NeuroTraff';
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: textGlare 3s ease-in-out infinite;
+        }
+        
+        @keyframes textShimmer {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        @keyframes textGlare {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 25px;
+            animation: glow 2s infinite alternate;
+            flex-shrink: 0;
+        }
+        
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.3); }
+            100% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.6); }
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #00ff00;
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 4rem;
+        }
+        
+        .section {
+            display: none;
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .search-section {
+            text-align: center;
+        }
+        
+        .search-title {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #ffffff, #00d4ff, #ff6b6b, #4ecdc4);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+            animation: titleGradient 6s ease infinite;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+            position: relative;
+        }
+        
+        .search-title::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: transparent;
+            z-index: -1;
+            border-radius: 20px;
+        }
+        
+        @keyframes titleGradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .search-subtitle {
+            font-size: 1.2rem;
+            color: #a0a0a0;
+            margin-bottom: 2rem;
+        }
+        
+        .dropdown-container {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .road-dropdown {
+            flex: 1;
+            padding: 1.5rem 2rem;
+            font-size: 1.1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 50px;
+            color: #fff;
+            outline: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .road-dropdown:focus {
+            border-color: #00d4ff;
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.6), 0 0 80px rgba(255, 107, 107, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        .road-dropdown option {
+            background: #1a1a2e;
+            color: #fff;
+            padding: 10px;
+        }
+        
+        .search-btn {
+            padding: 16px 32px;
+            background: linear-gradient(45deg, #00d4ff, #0099cc, #ff6b6b);
+            background-size: 200% 200%;
+            border: none;
+            border-radius: 50px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4), 0 0 40px rgba(255, 107, 107, 0.2);
+            animation: buttonGlow 2s ease infinite alternate;
+            min-width: 140px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 2px solid rgba(0, 212, 255, 0.5);
+        }
+        
+        .search-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .search-btn:hover {
+            transform: scale(1.08) translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.5), 0 0 30px rgba(255, 107, 107, 0.3);
+            background-position: 100% 50%;
+        }
+        
+        .search-btn:hover::before {
+            left: 100%;
+        }
+        
+        @keyframes buttonGlow {
+            0% { box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4), 0 0 40px rgba(255, 107, 107, 0.2); }
+            100% { box-shadow: 0 8px 25px rgba(0, 212, 255, 0.6), 0 0 50px rgba(255, 107, 107, 0.3); }
+        }
+        
+        .quick-select {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .quick-btn {
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 25px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .quick-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: translateY(-2px);
+            border-color: #00d4ff;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(25px);
+            border-radius: 25px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .card::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00d4ff, #ff6b6b, #4ecdc4, #00d4ff);
+            border-radius: 27px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            border-color: rgba(0, 212, 255, 0.4);
+        }
+        
+        .card:hover::before {
+            left: 100%;
+        }
+        
+        .card:hover::after {
+            opacity: 0;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #00d4ff;
+        }
+        
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .traffic-level {
+            background: linear-gradient(45deg, #ff4757, #ff3742);
+        }
+        
+        .time-estimate {
+            background: linear-gradient(45deg, #ffa502, #ff9500);
+        }
+        
+        .trend-analysis {
+            background: linear-gradient(45deg, #2ed573, #20bf6b);
+        }
+        
+        .metric-value {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #ffffff, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .metric-label {
+            color: #a0a0a0;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        
+        .traffic-high { background: linear-gradient(45deg, #ff4757, #ff3742); }
+        .traffic-medium { background: linear-gradient(45deg, #ffa502, #ff9500); }
+        .traffic-low { background: linear-gradient(45deg, #2ed573, #20bf6b); }
+        
+        .change-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .change-positive {
+            color: #2ed573;
+        }
+        
+        .change-negative {
+            color: #ff4757;
+        }
+        
+        .recent-predictions {
+            grid-column: 1 / -1;
+            margin-top: 2rem;
+        }
+        
+        .predictions-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .prediction-item {
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+        }
+        
+        .prediction-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .prediction-heavy { border-left-color: #ff4757; }
+        .prediction-moderate { border-left-color: #ffa502; }
+        .prediction-light { border-left-color: #2ed573; }
+        
+        .prediction-road {
+            font-weight: 600;
+            color: #00d4ff;
+            margin-bottom: 0.5rem;
+        }
+        
+        .prediction-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #a0a0a0;
+        }
+        
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            background: linear-gradient(45deg, #ffffff, #00d4ff, #ff6b6b);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: titleGradient 4s ease infinite;
+        }
+        
+        .content-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(25px);
+            border-radius: 25px;
+            padding: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            margin-bottom: 2rem;
+        }
+        
+        .content-card h3 {
+            color: #00d4ff;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+        
+        .content-card p {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            color: #c0c0c0;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 2rem;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.4);
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 2rem;
+            }
+            
+            header {
+                padding: 1rem 2rem;
+            }
+            
+            .header-content {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .dropdown-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .road-dropdown {
+                width: 100%;
+            }
+            
+            .search-btn {
+                width: 100%;
+                padding: 18px 20px;
+                font-size: 1.2rem;
+                font-weight: 800;
+                box-shadow: 0 8px 25px rgba(0, 212, 255, 0.5), 0 0 50px rgba(255, 107, 107, 0.3);
+            }
+            
+            .quick-select {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .search-title {
+                font-size: 2.2rem;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .content-card {
+                padding: 2rem;
+            }
+        }
+        
+        .floating-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .particle {
+            position: absolute;
+            background: radial-gradient(circle, #00d4ff, transparent);
+            border-radius: 50%;
+            animation: float-particle 15s infinite linear;
+        }
+        
+        @keyframes float-particle {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes fadeOut {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-pattern"></div>
+    <div class="floating-particles" id="particles"></div>
+    
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🚦</div>
+                <h1>NeuroTraff</h1>
+            </div>
+
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>Real-time Analysis</span>
+            </div>
+        </div>
+    </header>
+    
+    <div class="main-container">
+        <!-- Home Section -->
+        <section id="home" class="section active">
+            <div class="search-section">
+                <h2 class="search-title">Traffic Congestion Prediction System</h2>
+                <p class="search-subtitle">Advanced AI-powered traffic analysis for Thane's major roadways</p>
+                
+                <div class="dropdown-container">
+                    <select class="road-dropdown" id="roadDropdown" onchange="selectFromDropdown()">
+                        <option value="">Select a Road</option>
+                        <option value="SH-42 (Ghodbunder Road)">SH-42 (Ghodbunder Road)</option>
+                        <option value="Eastern Express Highway">Eastern Express Highway</option>
+                        <option value="LBS Marg">LBS Marg</option>
+                        <option value="Thane-Belapur Road">Thane-Belapur Road</option>
+                        <option value="Sion-Panvel Expressway">Sion-Panvel Expressway</option>
+                        <option value="Mumbai - Agra Road (NH3/NH160)">Mumbai - Agra Road (NH3/NH160)</option>
+                        <option value="MDR 64">MDR 64</option>
+                        <option value="SH 40">SH 40</option>
+                        <option value="MDR 62">MDR 62</option>
+                        <option value="Ring Road (Kalyan-Dombivli)">Ring Road (Kalyan-Dombivli)</option>
+                        <option value="Multi-Modal Corridor">Multi-Modal Corridor</option>
+                        <option value="Mumbra Bypass Road">Mumbra Bypass Road</option>
+                        <option value="Kalyan-Shilphata Road">Kalyan-Shilphata Road</option>
+                        <option value="Kalyan-Bhiwandi Road">Kalyan-Bhiwandi Road</option>
+                        <option value="Kalyan-Murbad Road">Kalyan-Murbad Road</option>
+                        <option value="Kalyan-Badlapur Road">Kalyan-Badlapur Road</option>
+                        <option value="Dombivli-Manpada Road">Dombivli-Manpada Road</option>
+                        <option value="Diva-Shil Road">Diva-Shil Road</option>
+                        <option value="Bhiwandi Bypass Road">Bhiwandi Bypass Road</option>
+                        <option value="MIDC Pipeline Road">MIDC Pipeline Road</option>
+                        <option value="Majiwada Junction">Majiwada Junction</option>
+                        <option value="Karegoan Toll Naka Stretch">Karegoan Toll Naka Stretch</option>
+                        <option value="Airoli-Thane Creek Bridge Road">Airoli-Thane Creek Bridge Road</option>
+                        <option value="Dombivali-Kalyan Link Road">Dombivali-Kalyan Link Road</option>
+                        <option value="Ambivli-Titwala Road">Ambivli-Titwala Road</option>
+                        <option value="Kalyan-Karjat Road">Kalyan-Karjat Road</option>
+                    </select>
+                    <button class="search-btn" onclick="predictTraffic()">Predict</button>
+                </div>
+                
+                <div class="quick-select">
+                    <div class="quick-btn" onclick="selectRoad('SH-42 (Ghodbunder Road)')">SH-42 Ghodbunder Road</div>
+                    <div class="quick-btn" onclick="selectRoad('Eastern Express Highway')">Eastern Express Highway</div>
+                    <div class="quick-btn" onclick="selectRoad('Kalyan-Bhiwandi Road')">Kalyan-Bhiwandi Road</div>
+                    <div class="quick-btn" onclick="selectRoad('Mumbra Bypass Road')">Mumbra Bypass Road</div>
+                    <div class="quick-btn" onclick="selectRoad('Kalyan-Karjat Road')">Kalyan-Karjat Road</div>
+                </div>
+            </div>
+            
+            <div class="dashboard" id="dashboard" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Traffic Level</h3>
+                        <div class="card-icon traffic-level">🚗</div>
+                    </div>
+                    <div class="metric-value" id="trafficLevel">--</div>
+                    <div class="metric-label">Current Congestion Status</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill traffic-medium" id="trafficProgress" style="width: 0%;"></div>
+                    </div>
+                    <div class="change-indicator change-negative">
+                        <span id="trafficChange">Waiting for prediction...</span>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Clear Time Estimate</h3>
+                        <div class="card-icon time-estimate">⏱️</div>
+                    </div>
+                    <div class="metric-value" id="clearTime">--</div>
+                    <div class="metric-label">Minutes to Clear</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill traffic-medium" style="width: 0%;"></div>
+                    </div>
+                    <div class="change-indicator change-positive">
+                        <span id="timeChange">Analyzing traffic patterns...</span>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Trend Analysis</h3>
+                        <div class="card-icon trend-analysis">📈</div>
+                    </div>
+                    <div class="metric-value" id="trendPercent">--</div>
+                    <div class="metric-label">Traffic Change Likelihood</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill traffic-medium" style="width: 0%;"></div>
+                    </div>
+                    <div class="change-indicator change-negative">
+                        <span id="trendStatus">Processing data...</span>
+                    </div>
+                </div>
+                
+                <div class="recent-predictions">
+                    <h3 style="color: #00d4ff; margin-bottom: 1rem; font-size: 1.3rem;">Recent Predictions</h3>
+                    <div class="predictions-list">
+                        <div class="prediction-item prediction-moderate">
+                            <div class="prediction-road">Sample Road 1</div>
+                            <div class="prediction-details">
+                                <span>Moderate Traffic</span>
+                                <span>-- min to clear</span>
+                            </div>
+                        </div>
+                        <div class="prediction-item prediction-light">
+                            <div class="prediction-road">Sample Road 2</div>
+                            <div class="prediction-details">
+                                <span>Light Traffic</span>
+                                <span>-- min to clear</span>
+                            </div>
+                        </div>
+                        <div class="prediction-item prediction-heavy">
+                            <div class="prediction-road">Sample Road 3</div>
+                            <div class="prediction-details">
+                                <span>Heavy Traffic</span>
+                                <span>-- min to clear</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Predictions Section -->
+        <section id="predictions" class="section" style="display: none;">
+            <h2 class="page-title">Traffic Predictions</h2>
+            <div class="content-card">
+                <h3>Real-Time Predictions</h3>
+                <p>Our advanced neural network analyzes traffic patterns, weather conditions, and historical data to provide accurate traffic predictions for Thane's major roadways.</p>
+                
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔮</div>
+                        <h4>Predictive Analytics</h4>
+                        <p>AI-powered predictions with 95% accuracy rate based on historical traffic patterns and real-time data analysis.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h4>Real-Time Updates</h4>
+                        <p>Live traffic updates every 30 seconds from multiple data sources including GPS, traffic cameras, and sensors.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h4>Historical Analysis</h4>
+                        <p>Comprehensive analysis of traffic patterns over time to identify peak hours and congestion trends.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analytics" class="section" style="display: none;">
+            <h2 class="page-title">Traffic Analytics</h2>
+            <div class="content-card">
+                <h3>Advanced Analytics Dashboard</h3>
+                <p>Comprehensive traffic analytics providing insights into congestion patterns, peak hours, and traffic flow optimization.</p>
+                
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📈</div>
+                        <h4>Traffic Flow Analysis</h4>
+                        <p>Detailed analysis of vehicle flow patterns, speed variations, and congestion hotspots across different time periods.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🕐</div>
+                        <h4>Peak Hour Identification</h4>
+                        <p>Automatic detection of peak traffic hours and congestion periods to help plan optimal travel times.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h4>Route Optimization</h4>
+                        <p>Smart route suggestions based on current traffic conditions and predicted congestion levels.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="section" style="display: none;">
+            <h2 class="page-title">About NeuroTraff</h2>
+            <div class="content-card">
+                <h3>Advanced AI-Powered Traffic Management</h3>
+                <p>NeuroTraff is a cutting-edge traffic prediction system that leverages artificial intelligence and machine learning to provide real-time traffic analysis and predictions for Thane's road network.</p>
+                
+                <h3>Our Mission</h3>
+                <p>To reduce traffic congestion and improve urban mobility through intelligent traffic prediction and optimization systems.</p>
+                
+                <h3>Technology Stack</h3>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🧠</div>
+                        <h4>Neural Networks</h4>
+                        <p>Advanced deep learning algorithms for pattern recognition and traffic prediction.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">☁️</div>
+                        <h4>Cloud Computing</h4>
+                        <p>Scalable cloud infrastructure for real-time data processing and analysis.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📡</div>
+                        <h4>IoT Integration</h4>
+                        <p>Integration with traffic sensors, cameras, and GPS data for comprehensive traffic monitoring.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <script>
+        // Function to handle dropdown selection
+        function selectFromDropdown() {
+            const dropdown = document.getElementById('roadDropdown');
+            
+            if (dropdown.value) {
+                predictTraffic();
+            }
+        }
+        
+        function selectRoad(roadName) {
+            document.getElementById('roadDropdown').value = roadName;
+            predictTraffic();
+        }
+        
+        function predictTraffic() {
+            const dropdown = document.getElementById('roadDropdown');
+            const roadName = dropdown.value;
+            if (!roadName.trim()) return;
+            
+            // Show dashboard with animation
+            const dashboard = document.getElementById('dashboard');
+            dashboard.style.display = 'grid';
+            dashboard.style.opacity = '0';
+            dashboard.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                dashboard.style.transition = 'all 0.5s ease';
+                dashboard.style.opacity = '1';
+                dashboard.style.transform = 'translateY(0)';
+            }, 100);
+            
+            // Scroll to dashboard
+            dashboard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // Show success feedback on button
+            const button = document.querySelector('.search-btn');
+            const originalText = button.textContent;
+            button.textContent = '✓ Predicted!';
+            button.style.background = 'linear-gradient(45deg, #2ed573, #20bf6b)';
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.background = 'linear-gradient(45deg, #00d4ff, #0099cc, #ff6b6b)';
+            }, 2000);
+        }
+        
+        // Create floating particles
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.width = particle.style.height = Math.random() * 6 + 3 + 'px';
+            particle.style.animationDuration = (Math.random() * 15 + 10) + 's';
+            particle.style.animationDelay = Math.random() * 5 + 's';
+            
+            // Random colors for particles
+            const colors = ['#00d4ff', '#ff6b6b', '#4ecdc4', '#ffa726', '#ab47bc'];
+            particle.style.background = `radial-gradient(circle, ${colors[Math.floor(Math.random() * colors.length)]}, transparent)`;
+            
+            document.getElementById('particles').appendChild(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+            }, 25000);
+        }
+        
+        // Generate more particles
+        setInterval(createParticle, 1500);
+        
+        // Initialize with more particles
+        for (let i = 0; i < 8; i++) {
+            setTimeout(createParticle, i * 500);
+        }
+        
+        // Add mouse trail effect
+        document.addEventListener('mousemove', function(e) {
+            if (Math.random() > 0.85) { // 15% chance
+                const trail = document.createElement('div');
+                trail.style.position = 'fixed';
+                trail.style.left = e.clientX + 'px';
+                trail.style.top = e.clientY + 'px';
+                trail.style.width = '4px';
+                trail.style.height = '4px';
+                trail.style.background = 'radial-gradient(circle, #00d4ff, transparent)';
+                trail.style.borderRadius = '50%';
+                trail.style.pointerEvents = 'none';
+                trail.style.zIndex = '1000';
+                trail.style.animation = 'fadeOut 1s ease-out forwards';
+                
+                document.body.appendChild(trail);
+                
+                setTimeout(() => {
+                    trail.remove();
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>
